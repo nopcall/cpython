@@ -56,6 +56,7 @@ PyObject *PyLong_FromLong(long ival)
         assert(p != NULL);
         return p;
     }
+    // 栈上未初始化的变量, 其值属于未定义
     if (maybe)
         return p;
     else
@@ -184,4 +185,3 @@ weekday(int year, int month, int day)
 
     return w;
 }
-

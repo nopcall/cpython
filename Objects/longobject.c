@@ -3009,16 +3009,19 @@ x_add(PyLongObject *a, PyLongObject *b)
     z = _PyLong_New(size_a+1);
     if (z == NULL)
         return NULL;
+    // 大数加法
     for (i = 0; i < size_b; ++i) {
         carry += a->ob_digit[i] + b->ob_digit[i];
         z->ob_digit[i] = carry & PyLong_MASK;
         carry >>= PyLong_SHIFT;
     }
+    // 如果 a比 b大得多，则A还有高位还没相加
     for (; i < size_a; ++i) {
         carry += a->ob_digit[i];
         z->ob_digit[i] = carry & PyLong_MASK;
         carry >>= PyLong_SHIFT;
     }
+    // 还可能有进位
     z->ob_digit[i] = carry;
     return long_normalize(z);
 }
@@ -5462,11 +5465,15 @@ PyLong_GetInfo(void)
 int
 _PyLong_Init(void)
 {
+    // 初始化小整数
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
     int ival, size;
+    // small_ints 静态数组存储小整数
     PyLongObject *v = small_ints;
 
+    // 从 [-n, n) 初始化
     for (ival = -NSMALLNEGINTS; ival <  NSMALLPOSINTS; ival++, v++) {
+        // 负数/0/正数
         size = (ival < 0) ? -1 : ((ival == 0) ? 0 : 1);
         if (Py_TYPE(v) == &PyLong_Type) {
             /* The element is already initialized, most likely
@@ -5488,12 +5495,15 @@ _PyLong_Init(void)
             (void)PyObject_INIT(v, &PyLong_Type);
         }
         Py_SIZE(v) = size;
+        # PyLongObject->ob_digit[0] 存储实际的数值
         v->ob_digit[0] = (digit)abs(ival);
     }
 #endif
+    // python中的0值
     _PyLong_Zero = PyLong_FromLong(0);
     if (_PyLong_Zero == NULL)
         return 0;
+    // python 中的1值
     _PyLong_One = PyLong_FromLong(1);
     if (_PyLong_One == NULL)
         return 0;
