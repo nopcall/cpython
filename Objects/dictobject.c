@@ -246,6 +246,7 @@ static uint64_t pydict_global_version = 0;
 #ifndef PyDict_MAXFREELIST
 #define PyDict_MAXFREELIST 80
 #endif
+// 缓存创建的dict方便再次使用
 static PyDictObject *free_list[PyDict_MAXFREELIST];
 static int numfree = 0;
 static PyDictKeysObject *keys_free_list[PyDict_MAXFREELIST];
@@ -525,6 +526,7 @@ static PyDictKeysObject *new_keys_object(Py_ssize_t size)
         es = sizeof(Py_ssize_t);
     }
 
+    // 先尝试坐缓存中获取
     if (size == PyDict_MINSIZE && numfreekeys > 0) {
         dk = keys_free_list[--numfreekeys];
     }
@@ -574,8 +576,8 @@ new_dict(PyDictKeysObject *keys, PyObject **values)
     assert(keys != NULL);
     if (numfree) {
         mp = free_list[--numfree];
-        assert (mp != NULL);
-        assert (Py_TYPE(mp) == &PyDict_Type);
+        assert(mp != NULL);
+        assert(Py_TYPE(mp) == &PyDict_Type);
         _Py_NewReference((PyObject *)mp);
     }
     else {

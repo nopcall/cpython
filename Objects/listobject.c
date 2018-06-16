@@ -254,12 +254,15 @@ ins1(PyListObject *self, Py_ssize_t where, PyObject *v)
 
     if (where < 0) {
         where += n;
+        // 空列表插入
         if (where < 0)
             where = 0;
     }
+    // ??啊?
     if (where > n)
         where = n;
     items = self->ob_item;
+    // 移动插入点之后的元素, 最耗时
     for (i = n; --i >= where; )
         items[i+1] = items[i];
     Py_INCREF(v);
@@ -320,11 +323,14 @@ list_dealloc(PyListObject *op)
            thrashing when a *very* large list is created and
            immediately deleted. */
         i = Py_SIZE(op);
+        // 只需要把列表内的元素引用减1即可,因为元素可能在别处还有使用.
         while (--i >= 0) {
             Py_XDECREF(op->ob_item[i]);
         }
+        // 释放列表申请的内存
         PyMem_FREE(op->ob_item);
     }
+    // 列表缓存,可以再次使用
     if (numfree < PyList_MAXFREELIST && PyList_CheckExact(op))
         free_list[numfree++] = op;
     else

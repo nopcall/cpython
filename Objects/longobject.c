@@ -224,7 +224,7 @@ _PyLong_Copy(PyLongObject *src)
     i = Py_SIZE(src);
     if (i < 0)
         i = -(i);
-    if (i < 2) {
+    if (i < 2) { // 0 或者 1个digit能够表示的数值
         sdigit ival = MEDIUM_VALUE(src);
         CHECK_SMALL_INT(ival);
     }
@@ -248,7 +248,7 @@ PyLong_FromLong(long ival)
     int ndigits = 0;
     int sign;
 
-    CHECK_SMALL_INT(ival);
+    CHECK_SMALL_INT(ival); // 宏里会检是否小整数, 是的话会在些直接返回.
 
     if (ival < 0) {
         /* negate: can't write this as abs_ival = -ival since that
@@ -5468,7 +5468,7 @@ _PyLong_Init(void)
     // 初始化小整数
 #if NSMALLNEGINTS + NSMALLPOSINTS > 0
     int ival, size;
-    // small_ints 静态数组存储小整数
+    // small_ints 静态数组存储小整数, v指向该数组首元素
     PyLongObject *v = small_ints;
 
     // 从 [-n, n) 初始化
@@ -5494,12 +5494,14 @@ _PyLong_Init(void)
         else {
             (void)PyObject_INIT(v, &PyLong_Type);
         }
+        // 存储表示该数值所需要的ob_digit数组的大小，
+        // 并且指明该数值的正负号或者为0则表明该数值为0
         Py_SIZE(v) = size;
-        # PyLongObject->ob_digit[0] 存储实际的数值
+        // PyLongObject->ob_digit[0] 存储实际的数值(绝对值)
         v->ob_digit[0] = (digit)abs(ival);
     }
 #endif
-    // python中的0值
+    // python中的0值, 实际存储在上面的small_ints里，如果开启small_ints的话
     _PyLong_Zero = PyLong_FromLong(0);
     if (_PyLong_Zero == NULL)
         return 0;
